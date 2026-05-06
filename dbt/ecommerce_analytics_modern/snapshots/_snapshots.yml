@@ -1,0 +1,20 @@
+# snapshots/_snapshots.yml
+version: 2
+
+snapshots:
+  - name: customers_snapshot
+    description: "SCD Type 2 snapshot of customer data"
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+      
+      - name: dbt_valid_from
+        description: "Start of validity period for this version"
+        tests:
+          - not_null
+      
+      - name: dbt_valid_to
+        description: "End of validity period (null = current version)"
+      
+    

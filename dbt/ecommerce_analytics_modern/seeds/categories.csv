@@ -1,0 +1,6 @@
+category_id,category_name,parent_category,is_active
+1,Electronics,Technology,true
+2,Smartphones,Electronics,true
+3,Laptops,Electronics,true
+4,Clothing,Apparel,true
+5,Books,Media,false

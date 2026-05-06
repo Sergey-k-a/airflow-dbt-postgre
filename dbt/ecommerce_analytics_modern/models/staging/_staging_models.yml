@@ -1,0 +1,131 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: "Cleaned customers data with segmentation"
+    columns:
+      - name: customer_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: email
+        description: "Customer email"
+        tests:
+          - not_null
+      - name: country
+        description: "Customer country"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Russia', 'USA', 'UK', 'Germany']
+      - name: country_code
+        description: "ISO country code"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['RU', 'US', 'GB', 'DE']
+      - name: customer_tier
+        description: "Customer loyalty tier"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['VIP', 'Gold', 'Silver', 'Bronze', 'New']
+      - name: registration_date
+        description: "Date of registration"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "<= CURRENT_DATE"
+
+  - name: stg_orders
+    description: "Cleaned orders data with metrics"
+    columns:
+      - name: order_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Foreign key to customers"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: product_id
+        description: "Foreign key to products"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+      - name: total_amount
+        description: "Order total amount"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0.01
+      - name: quantity
+        description: "Quantity of items"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 100
+      - name: status
+        description: "Order status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['completed', 'pending', 'cancelled', 'refunded', 'shipped']
+      - name: order_date
+        description: "Order date"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= '2023-01-01'"
+          - dbt_utils.expression_is_true:
+              expression: "<= CURRENT_DATE"
+      - name: order_category
+        description: "Order category (successful/in_progress/failed)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['successful', 'in_progress', 'failed', 'unknown']
+
+  - name: stg_products
+    description: "Staging модель для продуктов"
+    columns:
+      - name: product_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: "Product name"
+        tests:
+          - not_null
+      - name: category
+        description: "Product category"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Electronics', 'Clothing', 'Books', 'Home']
+      - name: price
+        description: "Product price"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0.01
+              max_value: 10000
+      - name: price_segment
+        description: "Price classification"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['premium', 'medium', 'budget']
+      - name: created_at
+        description: "Product creation date"
+        tests:
+          - not_null

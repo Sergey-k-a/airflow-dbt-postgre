@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer dimension table"
+    columns:
+      - name: customer_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: customer_tier
+        description: "Customer segment based on RFM analysis"
+        tests:
+          - not_null                           # ← добавить
+          - accepted_values:
+              values: ['VIP', 'Gold', 'Silver', 'New', 'Bronze']
+              
+  - name: fct_orders_incremental
+    description: 'Incremental fact table for orders with product and customer details'
+    columns:
+      - name: order_id
+        description: 'Primary key'
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: 'Foreign key to dim_customers'
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+      - name: order_date
+        description: 'Date of the order'
+        tests:
+          - not_null
+      - name: net_amount
+        description: 'Net amount after discount'
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:          # ← добавить проверку
+              min_value: 0

@@ -1,0 +1,6 @@
+region_code,region_name,country,delivery_days
+NYC,New York City,USA,2
+LAX,Los Angeles,USA,3
+LON,London,UK,5
+BER,Berlin,Germany,4
+TYO,Tokyo,Japan,7

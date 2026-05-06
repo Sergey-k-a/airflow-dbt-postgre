@@ -1,0 +1,36 @@
+version: 2
+
+sources:                                                    # Сырые данные, которые уже загружены
+  - name: raw                                               # Логическое имя источника. Это имя вы будете использовать в SQL-моделях через функцию {{ source('raw', 'customers') }}
+    schema: raw                                             # Физическое имя схемы в базе данных, где лежат исходные таблицы
+    database: dbt                                           # Явно указываем имя БД или хоста
+    description: "Raw ecommerce data loaded from CSV files"
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+    tables:
+      - name: customers                                   # Имя таблицы в базе данных. Здесь регистрируется таблица raw.customers
+        description: "Raw customers data"
+        columns:
+          - name: customer_id
+            description: "Primary key for customers"
+            tests:
+              - unique
+              - not_null
+          - name: email
+            tests:
+              - not_null
+      - name: products
+        description: "Raw products data"
+        columns:
+          - name: product_id
+            tests:
+              - unique
+              - not_null
+      - name: orders
+        description: "Raw orders data"
+        columns:
+          - name: order_id
+            tests:
+              - unique
+              - not_null

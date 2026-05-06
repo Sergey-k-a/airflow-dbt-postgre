@@ -1,0 +1,49 @@
+name: 'ecommerce_analytics_modern'
+version: '1.0.0'
+config-version: 2
+
+profile: 'ecommerce_analytics_modern'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analysis"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  ecommerce_analytics_modern:
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ["staging"]
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+    analytics:
+      +materialized: table
+      +schema: analytics
+      +tags: ["analytics"]
+
+seeds:
+  ecommerce_analytics_modern:
+    +schema: reference_data  # отдельная схема для seeds
+    +quote_columns: true     # кавычки для колонок
+    +delimiter: ","          # разделитель (запятая по умолчанию)
+    #+header: false  # первая строка = данные, не заголовки
+    
+    categories:
+      +column_types:
+        category_id: integer
+        is_active: boolean
+    
+    regions:
+      +column_types:
+        region_code: varchar(3)
+        delivery_days: integer

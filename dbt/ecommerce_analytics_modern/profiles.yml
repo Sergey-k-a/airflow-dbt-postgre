@@ -1,0 +1,28 @@
+# dbt/profiles.yml
+ecommerce_analytics_modern:
+  target: dev                                   # ← Активный таргет по умолчанию
+  outputs:
+    # Для запуска ИЗНУТРИ контейнера Airflow
+    dev:
+      type: postgres
+      host: postgres-dbt
+      user: dbt
+      password: dbt
+      port: 5432
+      dbname: dbt
+      schema: dbt
+      threads: 2
+    # ... настройки для DEV среды
+    
+    # Для запуска С ХОСТА (локальная разработка)
+    local:
+      type: postgres  
+      host: localhost
+      user: dbt
+      password: dbt
+      port: 5466
+      dbname: dbt
+      schema: staging
+      threads: 2
+
+      

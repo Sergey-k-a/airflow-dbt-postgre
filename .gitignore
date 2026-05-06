@@ -1,0 +1,100 @@
+# ============================================
+# Environment & Secrets
+# ============================================
+.env
+*.env
+!.env.example
+
+# ============================================
+# Airflow
+# ============================================
+logs/*
+!logs/.gitkeep
+airflow.db
+airflow.cfg
+unittests.cfg
+webserver_config.py
+
+# ============================================
+# dbt
+# ============================================
+dbt/ecommerce_analytics_modern/target/
+dbt/ecommerce_analytics_modern/dbt_packages/
+dbt/ecommerce_analytics_modern/logs/
+dbt_packages/
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+.env
+.venv
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ============================================
+# IDE & Editors
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Docker
+# ============================================
+docker-compose.override.yml
+docker-compose_old.yml
+docker-compose_260505.yml
+
+# ============================================
+# Data files (если большие)
+# ============================================
+data/raw/*.csv
+data/source/*.csv
+!data/raw/.gitkeep
+
+# ============================================
+# Temporary & Backup files
+# ============================================
+*.bak
+*.tmp
+*.log
+backup/
+tmp/
+temp/
+
+# ============================================
+# OS generated files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Project specific
+# ============================================
+rabbit.py
+dbt_commands.md
+dbt_main_comman.txt
+theory.md
+theory_old.md
+*.code-workspace

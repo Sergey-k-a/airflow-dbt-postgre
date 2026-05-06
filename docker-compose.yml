@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  postgres-dbt:
+    image: postgres:13
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 10s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 20
+
+  airflow-webserver-dbt:
+    build: .
+    depends_on:
+      postgres-dbt:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-dbt:5432/${POSTGRES_DB}
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: ${AIRFLOW__CORE__SQL_ALCHEMY_CONN}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
+      AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES}
+      AIRFLOW__LOGGING__FAB_LOGGING_LEVEL: ${AIRFLOW__LOGGING__FAB_LOGGING_LEVEL}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: ${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION}
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    ports:
+      - "8054:8080"
+      - "8055:8082"
+    restart: on-failure
+    command: >
+      bash -c "
+      airflow db init &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email serio@romerio@gmail.com &&
+      airflow webserver
+      "
+
+  airflow-scheduler-dbt:
+    build: .
+    depends_on:
+      postgres-dbt:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: ${AIRFLOW__CORE__SQL_ALCHEMY_CONN}
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-dbt:5432/${POSTGRES_DB}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: ${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION}
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    restart: on-failure
+    command: airflow scheduler
+
+  airflow-worker-dbt:
+    build: .
+    depends_on:
+      airflow-scheduler-dbt:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      postgres-dbt:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: ${AIRFLOW__CORE__SQL_ALCHEMY_CONN}
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-dbt:5432/${POSTGRES_DB}
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CELERY__WORKER_QUEUES: dbt_tasks,default
+      AIRFLOW__CELERY__WORKER_HOSTNAME: worker-dbt
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
+      - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+    restart: on-failure
+    #command: airflow celery worker --queues dbt_tasks,default 
+    command: >
+      bash -c "
+      cd /opt/airflow/dbt/ecommerce_analytics_modern &&
+      dbt deps &&                             
+      airflow celery worker --queues dbt_tasks,default
+      "
+
+  dbt-docs:
+    build: .
+    depends_on:
+      postgres-dbt:
+        condition: service_healthy
+    environment:
+      DBT_PROFILES_DIR: /opt/airflow/dbt/ecommerce_analytics_modern
+    volumes:
+      - ./dbt:/opt/airflow/dbt
+      - ./data:/opt/airflow/data
+    ports:
+      - "8066:8080"
+    restart: on-failure
+    command: >
+      bash -c "
+      sleep 10 &&
+      cd /opt/airflow/dbt/ecommerce_analytics_modern &&
+      dbt docs generate &&
+      dbt docs serve --port 8080 &
+      tail -f /dev/null
+      "
+
+volumes:
+  postgres_data:
