@@ -81,14 +81,6 @@ AIRFLOW__LOGGING__FAB_LOGGING_LEVEL=INFO
 AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=false
 EOF
 
-## 🎲 Генерация тестовых данных
-
-Проект включает скрипт для генерации реалистичных данных.
-# Зайти в контейнер airflow-worker-dbt
-docker compose exec -it airflow-worker-dbt bash
-# Запустить генерацию
-cd /opt/airflow/scripts
-python3 generate_data.py
 
 # Запустите сервисы
 docker-compose up -d
