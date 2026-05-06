@@ -98,3 +98,8 @@ dbt_main_comman.txt
 theory.md
 theory_old.md
 *.code-workspace
+
+
+dags/ecommerce_working_modern_hook.py
+dags/ecommerce_working.py
+dags/test_simple
